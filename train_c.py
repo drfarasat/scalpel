@@ -107,7 +107,8 @@ def main():
             # Forward + Backward + Optimize
             optimizer.zero_grad()
             pred_bboxes, pred_classes = model(images)
-            loss = compute_loss(pred_bboxes, pred_classes, true_bboxes, true_classes)
+            loss = compute_loss_smooth_focal(pred_bboxes, pred_classes, true_bboxes, true_classes)
+            #loss = compute_loss(pred_bboxes, pred_classes, true_bboxes, true_classes)
 
             #outputs = model(images)
             #loss = criterion(outputs, bbox)
