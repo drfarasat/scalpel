@@ -1,0 +1,125 @@
+{
+    "location": {
+        "space": "Green_Mat_Test",
+        "building": "London",
+        "client": "Scalpel",
+        "operator": "Abi"
+    },
+    "capture_unit": {
+        "id": "DCU001",
+        "software_version": "1.11.0",
+        "hardware_version": "0.2"
+    },
+    "camera": {
+        "serial_number": "700006719928",
+        "position": "top",
+        "type": "baumer",
+        "aperture_size": 8,
+        "focal_length": 0.5,
+        "exposure_time": 180000,
+        "height": 70,
+        "angle": 90
+    },
+    "image": {
+        "background_material": "green mat",
+        "layout": "laidout",
+        "capture_run_id": "3c927eec-1253-402f-baa4-fc467c821652",
+        "instrument_count": 5,
+        "platform_rotation": 0,
+        "ambient_light": 0,
+        "key": "London/DCU001/top/2023_04_17T11_08_44_608699",
+        "timestamp": "2023-04-17T11:08:44.608699"
+    },
+    "instruments": [
+        {
+            "uuid": "3af9d8da-c689-48f5-bd87-afbfc999e589",
+            "name": "NEEDLE HOLDER MAYO HEGAR 7\"",
+            "revised_uuid": null,
+            "orientation": {
+                "is_face_up": null,
+                "is_flat": null,
+                "other_description": null,
+                "is_symmetric": null
+            },
+            "condition": null,
+            "bbox": [
+                409,
+                847,
+                447,
+                1128
+            ],
+        },
+        {
+            "uuid": "b85cd33d-ddf1-4f99-b01d-f606471328b3",
+            "name": "LANE DISSECTING FORCEP 2 IN 3 TOOTHED 5.5\"",
+            "revised_uuid": null,
+            "orientation": {
+                "is_face_up": null,
+                "is_flat": null,
+                "other_description": null,
+                "is_symmetric": null
+            },
+            "condition": null,
+            "bbox": [
+                1072,
+                1045,
+                120,
+                891
+            ],
+        },
+        {
+            "uuid": "e1980f90-d880-4a02-8ec1-e928f412fa97",
+            "name": "LAHEY FORCEP",
+            "revised_uuid": null,
+            "orientation": {
+                "is_face_up": null,
+                "is_flat": null,
+                "other_description": null,
+                "is_symmetric": null
+            },
+            "condition": null,
+            "bbox": [
+                1381,
+                836,
+                505,
+                1232
+            ],
+        },
+        {
+            "uuid": "dc0a1515-6d9c-482b-859c-1d28e98b22b6",
+            "name": "MAYO SCISSOR STRAIGHT GOLD HANDLED 5.5\"",
+            "revised_uuid": null,
+            "orientation": {
+                "is_face_up": null,
+                "is_flat": null,
+                "other_description": null,
+                "is_symmetric": null
+            },
+            "condition": null,
+            "bbox": [
+                2044,
+                1169,
+                327,
+                874
+            ],
+        },
+        {
+            "uuid": "fa61384c-8f96-4ee5-a3f3-a41a44d172c4",
+            "name": "FORCEP LITTLEWOOD",
+            "revised_uuid": null,
+            "orientation": {
+                "is_face_up": null,
+                "is_flat": null,
+                "other_description": null,
+                "is_symmetric": null
+            },
+            "condition": null,
+            "bbox": [
+                2554,
+                907,
+                418,
+                1167
+            ]
+        }
+    ]
+}
