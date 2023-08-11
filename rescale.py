@@ -28,7 +28,7 @@ def draw_bounding_boxes(image_path, json_path):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-def rescale_dataset(image_path, json_path, newScale=512):
+def rescale_dataset(image_path, json_path, newScale=1024):
     # we need to rescale the images to 224x224
     # and also the bounding boxes
     # calculate the xscale and yscale
@@ -82,8 +82,8 @@ def rescale_dataset(image_path, json_path, newScale=512):
 
     # resize the image
     new_image = cv2.resize(img, (newScale, newScale), interpolation=cv2.INTER_AREA)
-    new_image_folder = '/home/fmr/Downloads/scalpel/rescale/images'
-    new_json_folder = '/home/fmr/Downloads/scalpel/rescale/jsons'
+    new_image_folder = '/home/fmr/Downloads/scalpel/rescale1000/images'
+    new_json_folder = '/home/fmr/Downloads/scalpel/rescale1000/jsons'
 
     # save the new image and json file
     #save the new image and json file
@@ -118,7 +118,7 @@ def main():
         # Check if corresponding json exists
         if os.path.exists(json_path):
             #draw_bounding_boxes(img_path, json_path)
-            rescale_dataset(img_path, json_path)
+            rescale_dataset(img_path, json_path, newScale=1024)
 
 if __name__ == "__main__":
     main()
