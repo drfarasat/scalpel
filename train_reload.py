@@ -1,3 +1,4 @@
+import os
 import cv2
 import numpy as np
 import torch
@@ -46,7 +47,7 @@ def main():
     BATCH_SIZE = 64
     NUM_WORKERS = 16
     
-    NUM_EPOCHS = 8000
+    NUM_EPOCHS = 6000
     SAVE_EVERY = 40
     MAX_OBJECTS =5
     num_classes = 5
@@ -68,21 +69,19 @@ def main():
     dataset = CustomDataset(img_dir=img_dir, label_dir=label_dir, transform=transform)
     #dataset = CustomDatasetAlbu(img_dir=img_dir, label_dir=label_dir)#, transform=transform)
 
-    #dataset = CustomDatasetAugmented(img_dir=img_dir, label_dir=label_dir)#, transform=transform)
+    
 
     # Splitting the dataset into training and validation
     train_size = int(0.8 * len(dataset))
     val_size = len(dataset) - train_size
     train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, val_size])
-
     
     # DataLoaders
     train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_WORKERS)
     val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS)
 
     # Parameters
-
-    lr = 0.001
+    lr = 0.0001
 
     # Loss and Optimizer
     criterion = nn.MSELoss()
@@ -90,6 +89,22 @@ def main():
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-4)
     scheduler = StepLR(optimizer, step_size=10, gamma=0.1) 
     scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=10, verbose=True)
+    
+    
+    # Disable gradient computation for all model parameters
+    for param in model.parameters():
+        param.requires_grad = False
+
+    # Enable gradient computation for classification layers only
+    for param in model.fc_class.parameters():
+        param.requires_grad = True
+
+    weights_path = '/home/fmr/workspace/scalpel/savedweights/focallosssimplered/model_weights_epoch_4000.pt'
+    weights_path ='runs/model_weights_epoch_6000.pt'
+    # Initialize model here...
+    if os.path.exists(weights_path):
+        model.load_state_dict(torch.load(weights_path))
+        print(f"Loaded model weights from {weights_path}")
     
     # Initializing lists to store losses
     train_losses = []
@@ -110,7 +125,7 @@ def main():
             # Forward + Backward + Optimize
             optimizer.zero_grad()
             pred_bboxes, pred_classes = model(images)
-            loss = compute_loss_smooth_focal(pred_bboxes, pred_classes, true_bboxes, true_classes)
+            loss = compute_loss_smooth_focal(pred_bboxes, pred_classes, true_bboxes, true_classes,wbox=0.0)
             #loss = compute_loss(pred_bboxes, pred_classes, true_bboxes, true_classes)
 
             #outputs = model(images)
@@ -126,7 +141,14 @@ def main():
        
         # Save weights every 10 epochs
         if epoch % SAVE_EVERY == 0:
-            torch.save(model.state_dict(), f"runs/model_weights_epoch_{epoch}.pt")
+            #torch.save(model.state_dict(), f"runs/model_weights_epoch_{epoch}.pt")
+            checkpoint_path = f"runs/ckpt_epoch_{epoch}.pt"
+            torch.save({
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'epoch': epoch,
+            'loss': loss,
+            }, checkpoint_path)
             
             # Save few sample images with bounding boxes
             with torch.no_grad():
@@ -148,7 +170,7 @@ def main():
             
                     pred_bboxes, pred_classes = model(images)
                     #loss = compute_loss(pred_bboxes, pred_classes, true_bboxes, true_classes)
-                    loss = compute_loss_smooth_focal(pred_bboxes, pred_classes, true_bboxes, true_classes)
+                    loss = compute_loss_smooth_focal(pred_bboxes, pred_classes, true_bboxes, true_classes, wbox=0)
 
 
                     val_loss += loss.item() * images.size(0)

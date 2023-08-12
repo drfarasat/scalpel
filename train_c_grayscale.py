@@ -12,7 +12,7 @@ from dataset import CustomDataset
 from dataset_aug import CustomDatasetAugmented
 from dataset_aug_albu import CustomDatasetAlbu
 from loss import compute_loss, compute_loss_smooth_focal
-from network import SimpleObjectDetector, SimpleObjectDetectorDropout,SimpleObjectDetectorRed, SimpleObjectDetectorBN, \
+from network import GrayScaleObjectDetector, SimpleObjectDetector, SimpleObjectDetectorDropout,SimpleObjectDetectorRed, SimpleObjectDetectorBN, \
 SimpleObjectDetectorWithResnet, FPN,SimpleObjectDetectorRedInput
 
 from network_attention import AttentionObjectDetector
@@ -39,14 +39,14 @@ def draw_bboxes(image, bboxes, labels):
     return image
 
 def main():
-    img_dir = '/home/fmr/Downloads/scalpel/rescale/images'
-    label_dir = '/home/fmr/Downloads/scalpel/rescale/jsons'
+    img_dir = '/home/fmr/Downloads/scalpel/rescale1000/images'
+    label_dir = '/home/fmr/Downloads/scalpel/rescale1000/jsons'
 
-    INPUT_SIZE = (512, 512 )
-    BATCH_SIZE = 64
+    INPUT_SIZE = (1024, 1024 )
+    BATCH_SIZE = 2
     NUM_WORKERS = 16
     
-    NUM_EPOCHS = 8000
+    NUM_EPOCHS = 4000
     SAVE_EVERY = 40
     MAX_OBJECTS =5
     num_classes = 5
@@ -57,10 +57,15 @@ def main():
     #model = SimpleObjectDetectorWithResnet()
     #model = FPN()
     #model = SimpleObjectDetectorRed()
-    model = SimpleObjectDetectorRedInput(input_size=INPUT_SIZE)
+    #model = SimpleObjectDetectorRedInput(input_size=INPUT_SIZE)
+
+    model = GrayScaleObjectDetector(input_size=INPUT_SIZE)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
-    
+    from torchsummary import summary
+
+    # Assuming the model is defined and is named 'model'
+      
     transform = transforms.Compose([
     #transforms.Resize((224, 224)),
     transforms.ToTensor(),
@@ -110,7 +115,11 @@ def main():
             # Forward + Backward + Optimize
             optimizer.zero_grad()
             pred_bboxes, pred_classes = model(images)
-            loss = compute_loss_smooth_focal(pred_bboxes, pred_classes, true_bboxes, true_classes)
+            loss = compute_loss_smooth_focal(pred_bboxes,
+                                            pred_classes,
+                                            true_bboxes,
+                                            true_classes,
+                                            wbox=1.0,)
             #loss = compute_loss(pred_bboxes, pred_classes, true_bboxes, true_classes)
 
             #outputs = model(images)
@@ -126,8 +135,14 @@ def main():
        
         # Save weights every 10 epochs
         if epoch % SAVE_EVERY == 0:
-            torch.save(model.state_dict(), f"runs/model_weights_epoch_{epoch}.pt")
-            
+            #torch.save(model.state_dict(), f"runs/model_weights_epoch_{epoch}.pt")
+            checkpoint_path = f"runs/ceckpoint_epoch_{epoch}.pt"
+            torch.save({
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'epoch': epoch,
+            'loss': loss,
+            }, checkpoint_path)
             # Save few sample images with bounding boxes
             with torch.no_grad():
                 sample_images = images[:5].cpu().numpy()  # taking first 5 images from the last batch
@@ -148,7 +163,11 @@ def main():
             
                     pred_bboxes, pred_classes = model(images)
                     #loss = compute_loss(pred_bboxes, pred_classes, true_bboxes, true_classes)
-                    loss = compute_loss_smooth_focal(pred_bboxes, pred_classes, true_bboxes, true_classes)
+                    loss = compute_loss_smooth_focal(pred_bboxes,
+                                                     pred_classes,
+                                                     true_bboxes,
+                                                     true_classes,
+                                                     wbox=1.0,)
 
 
                     val_loss += loss.item() * images.size(0)

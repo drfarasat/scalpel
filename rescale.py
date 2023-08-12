@@ -82,8 +82,8 @@ def rescale_dataset(image_path, json_path, newScale=1024):
 
     # resize the image
     new_image = cv2.resize(img, (newScale, newScale), interpolation=cv2.INTER_AREA)
-    new_image_folder = '/home/fmr/Downloads/scalpel/rescale1000/images'
-    new_json_folder = '/home/fmr/Downloads/scalpel/rescale1000/jsons'
+    new_image_folder = '/home/fmr/Downloads/scalpel/rescale700/images'
+    new_json_folder = '/home/fmr/Downloads/scalpel/rescale700/jsons'
 
     # save the new image and json file
     #save the new image and json file
@@ -118,7 +118,7 @@ def main():
         # Check if corresponding json exists
         if os.path.exists(json_path):
             #draw_bounding_boxes(img_path, json_path)
-            rescale_dataset(img_path, json_path, newScale=1024)
+            rescale_dataset(img_path, json_path, newScale=768)
 
 if __name__ == "__main__":
     main()
