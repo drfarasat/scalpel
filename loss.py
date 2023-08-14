@@ -75,7 +75,7 @@ class MultiClassFocalLoss(nn.Module):
 weights = torch.tensor([1.0, 1.5, 1.5, 1.5, 1.0], dtype=torch.float32)# class 0 and 4 are easy to detect
 focal_loss = MultiClassFocalLoss(gamma=2., alpha=0.25, class_weights=weights)
 
-def compute_loss_smooth_focal(pred_bboxes, pred_classes, true_bboxes, true_classes, wbox=0.0):
+def compute_loss_smooth_focal(pred_bboxes, pred_classes, true_bboxes, true_classes, wbox=1.0):
     MAX_OBJECTS = 5
     num_classes = 5
     pred_bboxes = pred_bboxes.view(-1, MAX_OBJECTS, 4)

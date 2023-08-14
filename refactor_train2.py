@@ -61,6 +61,31 @@ def write_images(images, pred_bboxes, pred_classes, epoch, data_type="train"):
 mean = [0.3250, 0.4593, 0.4189]
 std = [0.1759, 0.1573, 0.1695]
 
+
+def train_one_epoch(model, train_loader, optimizer, device):
+    model.train()
+    running_loss = 0.0
+    for images, (true_bboxes, true_classes) in train_loader:
+        images, true_bboxes, true_classes = images.to(device), true_bboxes.to(device), true_classes.to(device)
+        optimizer.zero_grad()
+        pred_bboxes, pred_classes = model(images)
+        loss = compute_loss_smooth_focal(pred_bboxes, pred_classes, true_bboxes, true_classes, wbox=1.0)
+        loss.backward()
+        optimizer.step()
+        running_loss += loss.item() * images.size(0)
+    return running_loss / len(train_loader.dataset)
+
+def validate(model, val_loader, device):
+    model.eval()
+    val_loss = 0.0
+    with torch.no_grad():
+        for images, (true_bboxes, true_classes) in val_loader:
+            images, true_bboxes, true_classes = images.to(device), true_bboxes.to(device), true_classes.to(device)
+            pred_bboxes, pred_classes = model(images)
+            loss = compute_loss_smooth_focal(pred_bboxes, pred_classes, true_bboxes, true_classes, wbox=1)
+            val_loss += loss.item() * images.size(0)
+    return val_loss / len(val_loader.dataset)
+
 def main(args):
     # Prepare data and dataloaders
     transform = transforms.Compose([transforms.ToTensor()])
@@ -97,6 +122,7 @@ def main(args):
     # Training loop
     train_losses = []
     valid_losses = []
+    """
     for epoch in range(1, args.num_epochs + 1):
         model.train()
         running_loss = 0.0
@@ -145,77 +171,54 @@ def main(args):
 
             train_losses.append(epoch_loss)
             valid_losses.append(val_epoch_loss)
-            
+    """        
             
 
     # Visualization
     #plt.figure(figsize=(10, 5
 
-def train_one_epoch(model, train_loader, optimizer, device):
-    model.train()
-    running_loss = 0.0
-    for images, (true_bboxes, true_classes) in train_loader:
-        images, true_bboxes, true_classes = images.to(device), true_bboxes.to(device), true_classes.to(device)
-        optimizer.zero_grad()
-        pred_bboxes, pred_classes = model(images)
-        loss = compute_loss_smooth_focal(pred_bboxes, pred_classes, true_bboxes, true_classes, wbox=0.0)
-        loss.backward()
-        optimizer.step()
-        running_loss += loss.item() * images.size(0)
-    return running_loss / len(train_loader.dataset)
 
-def validate(model, val_loader, device):
-    model.eval()
-    val_loss = 0.0
-    with torch.no_grad():
-        for images, (true_bboxes, true_classes) in val_loader:
-            images, true_bboxes, true_classes = images.to(device), true_bboxes.to(device), true_classes.to(device)
-            pred_bboxes, pred_classes = model(images)
-            loss = compute_loss_smooth_focal(pred_bboxes, pred_classes, true_bboxes, true_classes, wbox=0)
-            val_loss += loss.item() * images.size(0)
-    return val_loss / len(val_loader.dataset)
+    # Training loop
+    train_losses = []
+    valid_losses = []
+    for epoch in range(1, args.num_epochs + 1):
+        print('Epoch:', epoch, 'of', args.num_epochs, 'epochs')
+        train_loss = train_one_epoch(model, train_loader, optimizer, device)
+        val_loss = validate(model, val_loader, device)
 
-"""
-# Training loop
-train_losses = []
-valid_losses = []
-for epoch in range(1, args.num_epochs + 1):
-    print('Epoch:', epoch, 'of', args.num_epochs, 'epochs')
-    train_loss = train_one_epoch(model, train_loader, optimizer, device)
-    val_loss = validate(model, val_loader, device)
+        print(f"Epoch [{epoch}/{args.num_epochs}] - Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}")
+        
+        # Save weights and outputs
+        if epoch % args.save_every == 0:
+            checkpoint_path = f"runs/ckpt_epoch_{epoch}.pt"
+            torch.save({
+                'model_state_dict': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'epoch': epoch,
+                'loss': train_loss,
+            }, checkpoint_path)
+            with torch.no_grad():
+                # Sample predictions
+                def sampel_predictions(model, loader, device, epoch, data_type="train"):           
+                    sample_images, (sample_bboxes, sample_classes) = next(iter(loader))
+                    sample_images, sample_bboxes, sample_classes = sample_images.to(device), sample_bboxes.to(device), sample_classes.to(device)
+                    pred_bboxes, pred_classes = model(sample_images[:5])
+                    #pred_bboxes = pred_bboxes.view(-1, args.max_objects, 4).cpu().numpy()
+                    #pred_classes = torch.argmax(pred_classes.view(-1, args.max_objects, args.num_classes), dim=-1).cpu().numpy()
 
-    print(f"Epoch [{epoch}/{args.num_epochs}] - Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}")
-    
-    # Save weights and outputs
-    if epoch % args.save_every == 0:
-        checkpoint_path = f"runs/ckpt_epoch_{epoch}.pt"
-        torch.save({
-            'model_state_dict': model.state_dict(),
-            'optimizer_state_dict': optimizer.state_dict(),
-            'epoch': epoch,
-            'loss': train_loss,
-        }, checkpoint_path)
+                    write_images(sample_images, pred_bboxes, pred_classes, epoch, data_type="val")
 
-        # Sample predictions
-        sample_images, (sample_bboxes, sample_classes) = next(iter(val_loader))
-        sample_images, sample_bboxes, sample_classes = sample_images.to(device), sample_bboxes.to(device), sample_classes.to(device)
-        pred_bboxes, pred_classes = model(sample_images[:5])
-        pred_bboxes = pred_bboxes.view(-1, args.max_objects, 4).cpu().numpy()
-        pred_classes = torch.argmax(pred_classes.view(-1, args.max_objects, args.num_classes), dim=-1).cpu().numpy()
+                sampel_predictions(model, train_loader, device, epoch, data_type="train")
+                sampel_predictions(model, val_loader, device, epoch, data_type="val")
+     
 
-        for idx, (image, bboxes, labels) in enumerate(zip(sample_images.cpu().numpy(), pred_bboxes, pred_classes)):
-            image = (image.transpose(1, 2, 0) * 255).astype(np.uint8).copy()
-            image_with_bboxes = draw_bboxes(image, bboxes, labels)
-            out_fname = f"pred_output/outputsample_epoch_{epoch}_img_{idx}.png"
-            cv2.imwrite(out_fname, image_with_bboxes)
+        train_losses.append(train_loss)
+        valid_losses.append(val_loss)
+        scheduler.step(val_loss)
 
-    train_losses.append(train_loss)
-    valid_losses.append(val_loss)
-    scheduler.step(val_loss)
+    # 
 
-# 
 
-"""
 
 if __name__ == "__main__":
     args = get_args()

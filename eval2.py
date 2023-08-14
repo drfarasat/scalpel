@@ -46,62 +46,6 @@ def calculate_iou_fmr(pred_boxes, true_boxes):
     return iou
 
 
-def evaluateold(model, dataloader, device, iou_threshold=0.5, class_threshold=0.5):
-    model.eval()
-    
-    total_correct_classifications = 0
-    total_bbox_predictions = 0
-    total_iou = 0
-    
-    with torch.no_grad():
-        for batch in dataloader:
-            images, (true_bboxes, true_labels) = batch
-            images = images.to(device)
-            true_bboxes = true_bboxes.to(device)
-            true_labels = true_labels.to(device)
-            
-            pred_bboxes, pred_classifications = model(images)
-            #pred_classes = pred_classifications
-            #pred_bboxes = pred_bboxes.view(-1, MAX_OBJECTS, 4)[:5].cpu().numpy()
-            #pred_classes = torch.argmax(pred_classes.view(-1, MAX_OBJECTS, num_classes)[:5], dim=-1).cpu().numpy()
-
-            # Convert predictions to proper shape
-            pred_bboxes = pred_bboxes.view(-1, 4)  # Reshape to match the true boxes
-            
-           # print(pred_bboxes.shape, true_bboxes.squeeze().shape)
-            ##pred_classifications = pred_classifications.view(-1, 5)  # Assuming 5 classes
-            # Reshape pred_classifications for the batch size and number of objects
-            pred_classifications = pred_classifications.view(images.size(0), -1, 5)
-
-            # Determine the class with highest score for each bounding box
-            _, pred_labels = pred_classifications.max(2)
-            # Set the classes with score above the threshold as active
-            active_classes = (pred_classifications > class_threshold).int()
-
-            
-            # Determine the class with highest score for each bounding box
-            ##_, pred_labels = pred_classifications.max(1)
-            # Set the classes with score above the threshold as active
-            ##active_classes = (pred_classifications > class_threshold).int()
-            
-            # Check if predicted class is among the true active classes
-            total_correct_classifications += ((active_classes.gather(1, true_labels.unsqueeze(1)) > 0).int()).sum().item()
-            
-            # Calculating IoU for the bounding boxes
-            #print(pred_bboxes.shape, true_bboxes.squeeze().shape)
-            iou = calculate_iou(pred_bboxes, true_bboxes.squeeze())
-            iou2 = calculate_iou_fmr(pred_bboxes, true_bboxes.squeeze())
-            total_iou += (iou > iou_threshold).sum().item()
-            total_bbox_predictions += true_bboxes.size(0)
-    
-    class_accuracy = total_correct_classifications / total_bbox_predictions
-    bbox_accuracy = total_iou / total_bbox_predictions
-    
-    print(f"Classification Accuracy: {class_accuracy * 100:.2f}%")
-    print(f"Bounding Box Accuracy (IoU > {iou_threshold}): {bbox_accuracy * 100:.2f}%")
-    
-    return class_accuracy, bbox_accuracy
-
 def evaluate(model, dataloader, device):
     model.eval()
 
