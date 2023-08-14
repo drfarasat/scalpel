@@ -10,6 +10,39 @@ import json
 import os
 from PIL import Image
 
+from torchvision.transforms import functional as F
+from PIL import ImageOps
+
+class ResizeMaintainAspectRatio(object):
+    def __init__(self, target_size=(100, 400)):
+        self.target_size = target_size
+
+    def __call__(self, img):
+        w, h = img.size
+        if w > h: # Width is the larger dimension
+            new_w = self.target_size[1]
+            scale_factor = new_w / w
+            new_h = int(h * scale_factor)
+        else: # Height is the larger dimension or they're equal
+            new_h = self.target_size[1]
+            scale_factor = new_h / h
+            new_w = int(w * scale_factor)
+        
+        resized_img = F.resize(img, (new_h, new_w))
+        
+        # Zero-padding to fit the 100x400 frame
+        delta_w = self.target_size[1] - new_w
+        delta_h = self.target_size[0] - new_h
+        padding = (delta_w//2, delta_h//2, delta_w-(delta_w//2), delta_h-(delta_h//2))
+        padded_img = ImageOps.expand(resized_img, padding)
+        
+        return padded_img
+transform = transforms.Compose([
+    ResizeMaintainAspectRatio(),
+    # other transforms e.g.
+    transforms.ToTensor(),
+    #transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+])
 class CustomDataset(torch.utils.data.Dataset):
     def __init__(self, img_dir, label_dir, transform=None):
         self.img_dir = img_dir

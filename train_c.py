@@ -12,11 +12,13 @@ from dataset import CustomDataset
 from dataset_aug import CustomDatasetAugmented
 from dataset_aug_albu import CustomDatasetAlbu
 from loss import compute_loss, compute_loss_smooth_focal
-from network import SimpleObjectDetector, SimpleObjectDetectorDropout,SimpleObjectDetectorRed, SimpleObjectDetectorBN, \
+from network import FPNCAT, SimpleObjectDetector, SimpleObjectDetectorDropout,SimpleObjectDetectorRed, SimpleObjectDetectorBN, \
 SimpleObjectDetectorWithResnet, FPN,SimpleObjectDetectorRedInput
 
 from network_attention import AttentionObjectDetector
 import albumentations as A
+
+from network_fpn import FPNCATSimple
 
 transform = A.Compose([
         A.HorizontalFlip(p=0.5),
@@ -57,15 +59,26 @@ def main():
     #model = SimpleObjectDetectorWithResnet()
     #model = FPN()
     #model = SimpleObjectDetectorRed()
-    model = SimpleObjectDetectorRedInput(input_size=INPUT_SIZE)
+    #model = SimpleObjectDetectorRedInput(input_size=INPUT_SIZE)
+    #model =FPN()
+    model = FPNCATSimple()
+    model = AttentionObjectDetector()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
     
+    mean = [0.3250, 0.4593, 0.4189]
+    std = [0.1759, 0.1573, 0.1695]
+
+    data_transforms = transforms.Compose([
+        #transforms.Resize((512, 512)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean, std)
+    ])
     transform = transforms.Compose([
     #transforms.Resize((224, 224)),
     transforms.ToTensor(),
     ])
-    dataset = CustomDataset(img_dir=img_dir, label_dir=label_dir, transform=transform)
+    dataset = CustomDataset(img_dir=img_dir, label_dir=label_dir, transform=data_transforms)
     #dataset = CustomDatasetAlbu(img_dir=img_dir, label_dir=label_dir)#, transform=transform)
 
     #dataset = CustomDatasetAugmented(img_dir=img_dir, label_dir=label_dir)#, transform=transform)
@@ -110,7 +123,7 @@ def main():
             # Forward + Backward + Optimize
             optimizer.zero_grad()
             pred_bboxes, pred_classes = model(images)
-            loss = compute_loss_smooth_focal(pred_bboxes, pred_classes, true_bboxes, true_classes)
+            loss = compute_loss_smooth_focal(pred_bboxes, pred_classes, true_bboxes, true_classes, wbox=1)
             #loss = compute_loss(pred_bboxes, pred_classes, true_bboxes, true_classes)
 
             #outputs = model(images)
@@ -148,7 +161,7 @@ def main():
             
                     pred_bboxes, pred_classes = model(images)
                     #loss = compute_loss(pred_bboxes, pred_classes, true_bboxes, true_classes)
-                    loss = compute_loss_smooth_focal(pred_bboxes, pred_classes, true_bboxes, true_classes)
+                    loss = compute_loss_smooth_focal(pred_bboxes, pred_classes, true_bboxes, true_classes, wbox=1.0)
 
 
                     val_loss += loss.item() * images.size(0)

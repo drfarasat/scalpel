@@ -42,14 +42,14 @@ tile_size = dataset.tile_size
 tile_stride =(1,1)# dataset.tile_stride
 
 # Create an empty numpy array for tiles
-tile_canvas = np.zeros((img.height, img.width, 3), dtype=np.uint8)
+#tile_canvas = np.zeros((img.height, img.width, 3), dtype=np.uint8)
 
 # Overlay the tiles onto the canvas
-for y in range(0, img.height - tile_size[1] + 1, tile_stride[1]):
-    for x in range(0, img.width - tile_size[0] + 1, tile_stride[0]):
-        tile = img.crop((x, y, x + tile_size[0], y + tile_size[1]))
-        #print(tile.size)
-        tile_canvas[y:y+tile_size[1], x:x+tile_size[0], :] = np.array(tile)
+#for y in range(0, img.height - tile_size[1] + 1, tile_stride[1]):
+#    for x in range(0, img.width - tile_size[0] + 1, tile_stride[0]):
+#        tile = img.crop((x, y, x + tile_size[0], y + tile_size[1]))
+#        #print(tile.size)
+ #       tile_canvas[y:y+tile_size[1], x:x+tile_size[0], :] = np.array(tile)
 
 tile_canvas = np.zeros((img.height, img.width, 3), dtype=np.uint8)
 
