@@ -127,26 +127,40 @@ def evaluate(model, dataloader, device):
     return accuracy, avg_iou
 
 def main():
+    # Change these paths as per your setup
     img_dir = '/home/fmr/Downloads/scalpel/rescale/images'
     label_dir = '/home/fmr/Downloads/scalpel/rescale/jsons'
     mean = [0.3250, 0.4593, 0.4189]
     std = [0.1759, 0.1573, 0.1695]
+    
+    model_name = 'FPN'
+    #uncomment below line for FPNCATSIMPLE
+    #model_name = 'FPNCATSimple'
 
 
-    data_transforms = transforms.Compose([
-        #transforms.Resize((512, 512)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean, std)
-    ])
-    transform = transforms.Compose([
+    if model_name == 'FPN':
+        model = FPN()
+        checkpoint_path = "savedweights/fpncatRes18/model_weights_epoch_4280.pt"
+        transform = transforms.Compose([
         #transforms.Resize((224, 224)),
         transforms.ToTensor(),
         ])
-    #dataset = CustomDataset(img_dir=img_dir, label_dir=label_dir, transform=data_transforms)
-    dataset = CustomDataset(img_dir=img_dir, label_dir=label_dir, transform=transform)
-    #dataset = CustomDatasetAlbu(img_dir=img_dir, label_dir=label_dir)#, transform=transform)
-
+    
+        dataset = CustomDataset(img_dir=img_dir, label_dir=label_dir, transform=transform)
+   
+    elif model_name == 'FPNCATSimple':
+        model = FPNCATSimple()
         
+        checkpoint_path = "savedweights/FPNCatSimple/model_weights_epoch_8000.pt"
+
+        data_transforms = transforms.Compose([
+        #transforms.Resize((512, 512)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean, std)
+        ])
+        dataset = CustomDataset(img_dir=img_dir, label_dir=label_dir, transform=data_transforms)
+    
+      
     INPUT_SIZE = (512, 512 )
     BATCH_SIZE = 1
     NUM_WORKERS = 1
@@ -162,14 +176,7 @@ def main():
 
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = FPN().to(device)
-    #model = FPNCATSimple().to(device)
-    #model.load_state_dict(torch.load("path_to_saved_model.pth", map_location=device))
-    checkpoint_path = "savedweights/fpncatRes18/model_weights_epoch_4280.pt"
-    #checkpoint_path ="savedweights/simpleBfpncat/model_weights_epoch_8000.pt"
-    #checkpoint_path = "savedweights/FPNCatSimple/model_weights_epoch_8000.pt"
-    #checkpoint_path = "savedweights/FPNCatSimple/model_weights_epoch_8000.pt"
-    #checkpoint_path ="runs/model_weights_epoch_6000.pt"
+    model = model.to(device)
     model.load_state_dict(torch.load(checkpoint_path, map_location='cuda' if torch.cuda.is_available() else 'cpu'))
     model.eval()
     evaluate(model, val_loader, device)
