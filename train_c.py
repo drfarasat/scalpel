@@ -45,7 +45,7 @@ def main():
     label_dir = '/home/fmr/Downloads/scalpel/rescale/jsons'
 
     INPUT_SIZE = (512, 512 )
-    BATCH_SIZE = 64
+    BATCH_SIZE = 16
     NUM_WORKERS = 16
     
     NUM_EPOCHS = 8000
@@ -62,7 +62,7 @@ def main():
     #model = SimpleObjectDetectorRedInput(input_size=INPUT_SIZE)
     #model =FPN()
     model = FPNCATSimple()
-    model = AttentionObjectDetector()
+    #model = AttentionObjectDetector()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
     
