@@ -53,36 +53,42 @@ def main():
     MAX_OBJECTS =5
     num_classes = 5
 
-    # Model
-    #model = SimpleObjectDetector(input_width=224, input_height=224, num_classes=5, max_objects=5)
-    #model = SimpleObjectDetector()
-    #model = SimpleObjectDetectorWithResnet()
-    #model = FPN()
-    #model = SimpleObjectDetectorRed()
-    #model = SimpleObjectDetectorRedInput(input_size=INPUT_SIZE)
-    #model =FPN()
-    model = FPNCATSimple()
-    #model = AttentionObjectDetector()
+    model_name = 'FPN'
+    #uncomment below line for FPNCATSIMPLE
+    #model_name = 'FPNCATSimple'
+
+
+    if model_name == 'FPN':
+        model = FPN()
+        
+        transform = transforms.Compose([
+        #transforms.Resize((512, 512)),
+        transforms.ToTensor(),
+        ])
+    
+        dataset = CustomDataset(img_dir=img_dir, label_dir=label_dir, transform=transform)
+   
+    elif model_name == 'FPNCATSimple':
+        model = FPNCATSimple()
+        
+        
+
+        data_transforms = transforms.Compose([
+        #transforms.Resize((512, 512)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean, std)
+        ])
+        dataset = CustomDataset(img_dir=img_dir, label_dir=label_dir, transform=data_transforms)
+    
+    
+    
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
     
     mean = [0.3250, 0.4593, 0.4189]
     std = [0.1759, 0.1573, 0.1695]
 
-    data_transforms = transforms.Compose([
-        #transforms.Resize((512, 512)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean, std)
-    ])
-    transform = transforms.Compose([
-    #transforms.Resize((224, 224)),
-    transforms.ToTensor(),
-    ])
-    dataset = CustomDataset(img_dir=img_dir, label_dir=label_dir, transform=data_transforms)
-    #dataset = CustomDatasetAlbu(img_dir=img_dir, label_dir=label_dir)#, transform=transform)
-
-    #dataset = CustomDatasetAugmented(img_dir=img_dir, label_dir=label_dir)#, transform=transform)
-
+    
     # Splitting the dataset into training and validation
     train_size = int(0.8 * len(dataset))
     val_size = len(dataset) - train_size
@@ -200,8 +206,5 @@ def main():
 
 
 
-    
-# here i define the entry point of the script
 if __name__ == "__main__":
-    # here i call the main function
     main()
